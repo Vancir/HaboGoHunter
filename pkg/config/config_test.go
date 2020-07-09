@@ -1,4 +1,4 @@
-package haboutils
+package config
 
 import (
 	"fmt"

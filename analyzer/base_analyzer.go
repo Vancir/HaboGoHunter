@@ -9,7 +9,7 @@ import (
 var log = logging.MustGetLogger("base_analyzer")
 
 type BaseAnalyzer struct {
-	config
+	cfg Config
 }
 
 func main() {

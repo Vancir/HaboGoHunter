@@ -1,7 +1,10 @@
-package main
+package osutil
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/pkg/errors"
@@ -19,14 +22,6 @@ func TouchFile(name string) (err error) {
 		return
 	}
 	defer empty.Close()
-	return nil
-}
-
-func ReadFile() error {
-	return nil
-}
-
-func WriteFile() error {
 	return nil
 }
 
@@ -64,12 +59,52 @@ func CopyFile(src, dst string) (err error) {
 	return nil
 }
 
-func Rename() error {
-	return nil
+func Rename(oldFile, newFile string) error {
+	err := os.Rename(oldFile, newFile)
+	if err != nil {
+		err = CopyFile(oldFile, newFile)
+		os.Remove(oldFile)
+	}
+	return err
 }
 
-func GetFileMd5() string {
-	return ""
+func CreateTempFile(prefix string) (string, error) {
+	file, err := ioutil.TempFile("", prefix)
+	if err != nil {
+		return "", CreateFileError
+	}
+	defer file.Close()
+	return file.Name(), nil
 }
 
-// TODO: Touch/Read/Write/Copy/Rename Temp File
+func GetFileMd5(path string) (digest string, err error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	// Open a new hash interface to write to
+	hash := md5.New()
+	// Copy the file in the hash interface and check for any error
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+
+	// Get the 16 bytes hash
+	hashInBytes := hash.Sum(nil)[:16]
+	// Convert the bytes to a string
+	digest = hex.EncodeToString(hashInBytes)
+	return digest, nil
+}
+
+func IsFileExist(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}

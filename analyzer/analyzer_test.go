@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,4 +26,6 @@ func TestStaticAnalyzer(t *testing.T) {
 	sa.Target = "testdata/helloworld"
 
 	assert.Equal(t, sa.IsUpxPacked(), false, ShouldBeEqual)
+	info, _ := sa.GetFileInfo()
+	assert.Equal(t, strings.Split(info, ",")[0], "ELF 64-bit LSB pie executable")
 }

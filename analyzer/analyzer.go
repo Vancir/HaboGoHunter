@@ -2,10 +2,12 @@ package analyzer
 
 import (
 	"errors"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/Vancir/HaboGoHunter/pkg/config"
+	"github.com/Vancir/HaboGoHunter/pkg/utils/fileutil"
 	"github.com/Vancir/HaboGoHunter/pkg/utils/osutil"
 	"github.com/op/go-logging"
 )
@@ -53,4 +55,16 @@ func (s StaticAnalyzer) IsUpxPacked() bool {
 	} else {
 		return false
 	}
+}
+
+func (s StaticAnalyzer) GetFileInfo() (string, error) {
+	abspath, err := filepath.Abs(s.Target)
+	if err != nil {
+		return "", err
+	}
+	if isExist, err := fileutil.IsFileExist(abspath); !isExist {
+		return "", err
+	}
+	output, err := osutil.RunCmd(5, ".", "/usr/bin/file", abspath)
+	return strings.TrimSpace(strings.Split(output, ":")[1]), err
 }

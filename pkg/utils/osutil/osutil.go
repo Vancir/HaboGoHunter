@@ -35,10 +35,12 @@ func Command(bin string, args ...string) *exec.Cmd {
 	return cmd
 }
 
-func RunCmd(timeout time.Duration, dir, bin string, args ...string) ([]byte, error) {
+func RunCmd(timeout int64, dir string, bin string, args ...string) (string, error) {
 	cmd := Command(bin, args...)
 	cmd.Dir = dir
-	return run(timeout, cmd)
+	duration := time.Duration(timeout) * time.Second
+	output, err := run(duration, cmd)
+	return string(output), err
 }
 
 func run(timeout time.Duration, cmd *exec.Cmd) ([]byte, error) {

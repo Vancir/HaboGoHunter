@@ -1,9 +1,12 @@
 package analyzer
 
 import (
+	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/Vancir/HaboGoHunter/pkg/config"
+	"github.com/Vancir/HaboGoHunter/pkg/utils/osutil"
 	"github.com/op/go-logging"
 )
 
@@ -19,8 +22,13 @@ var (
 	REGEX_PRIVATE_IPADDR = regexp.MustCompile(PRIVATE_IPADDR)
 )
 
+var (
+	RunCommandError = errors.New("Error happened when execute command")
+)
+
 type BaseAnalyzer struct {
-	cfg config.Config
+	Target string
+	Config config.Config
 }
 
 func (this BaseAnalyzer) PickIP(target string) string {
@@ -28,5 +36,21 @@ func (this BaseAnalyzer) PickIP(target string) string {
 }
 
 func (this BaseAnalyzer) IsPublicIP(target string) bool {
-	return REGEX_PRIVATE_IPADDR.MatchString(target)
+	return !REGEX_PRIVATE_IPADDR.MatchString(target)
+}
+
+type StaticAnalyzer struct {
+	BaseAnalyzer
+}
+
+func (s StaticAnalyzer) IsUpxPacked() bool {
+	output, err := osutil.RunCmd(5, ".", "/usr/bin/upx", "-q", "-t", s.Target)
+	if err != nil {
+		return false
+	}
+	if strings.Contains(output, "[OK]") {
+		return true
+	} else {
+		return false
+	}
 }

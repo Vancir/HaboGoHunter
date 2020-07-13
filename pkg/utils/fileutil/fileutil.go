@@ -2,11 +2,15 @@ package fileutil
 
 import (
 	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
+	"github.com/Vancir/HaboGoHunter/pkg/utils/osutil"
 	"github.com/pkg/errors"
 )
 
@@ -96,6 +100,59 @@ func GetFileMd5(path string) (digest string, err error) {
 	// Convert the bytes to a string
 	digest = hex.EncodeToString(hashInBytes)
 	return digest, nil
+}
+
+func GetFileSha1(path string) (digest string, err error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	// Open a new hash interface to write to
+	hash := sha1.New()
+	// Copy the file in the hash interface and check for any error
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+
+	// Get the 16 bytes hash
+	hashInBytes := hash.Sum(nil)
+	// Convert the bytes to a string
+	digest = hex.EncodeToString(hashInBytes)
+	return digest, nil
+}
+
+func GetFileSha256(path string) (digest string, err error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	// Open a new hash interface to write to
+	hash := sha256.New()
+	// Copy the file in the hash interface and check for any error
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+
+	// Get the 16 bytes hash
+	hashInBytes := hash.Sum(nil)
+	// Convert the bytes to a string
+	digest = hex.EncodeToString(hashInBytes)
+	return digest, nil
+}
+
+func GetFileSSDeep(path string) (digest string, err error) {
+	output, err := osutil.RunCmd(5, ".", "ssdeep", path)
+	if err != nil {
+		return "", nil
+	}
+
+	hashpart := strings.Split(output, "\n")[1]
+
+	return strings.TrimSpace(strings.Split(hashpart, ",")[0]), nil
 }
 
 func IsFileExist(path string) (bool, error) {

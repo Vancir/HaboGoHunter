@@ -11,6 +11,9 @@ func TestHashFunc(t *testing.T) {
 
 	target := "testdata/helloworld"
 
+	filesize, _ := GetFileSize(target)
+	assert.EqualValues(t, filesize, 16536)
+
 	digest, _ := GetFileMd5(target)
 	assert.Equal(t, digest, "3fb856dc07a7de73fab89c34e53b7c5c")
 

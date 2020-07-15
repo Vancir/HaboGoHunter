@@ -81,6 +81,14 @@ func CreateTempFile(prefix string) (string, error) {
 	return file.Name(), nil
 }
 
+func GetFileSize(path string) (int64, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return -1, err
+	}
+	return fi.Size(), nil
+}
+
 func GetFileMd5(path string) (digest string, err error) {
 	file, err := os.Open(path)
 	if err != nil {

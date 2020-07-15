@@ -28,4 +28,7 @@ func TestStaticAnalyzer(t *testing.T) {
 
 	exifInfo, _ := sa.GetExifInfo()
 	assert.Equal(t, "ELF shared library", exifInfo["File Type"])
+
+	ascii, _ := sa.GetAsciiStr()
+	assert.Equal(t, "/lib64/ld-linux-x86-64.so.2", ascii[0])
 }

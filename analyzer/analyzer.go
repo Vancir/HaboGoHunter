@@ -14,6 +14,13 @@ import (
 
 var log = logging.MustGetLogger("base_analyzer")
 
+const (
+	EXEC_DIR     = "."
+	BIN_UPX      = "/usr/bin/upx"
+	BIN_FILE     = "/usr/bin/file"
+	BIN_EXIFTOOL = "/usr/bin/vendor_perl/exiftool"
+)
+
 var (
 	IPADDR         = `(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d*)?)`
 	PRIVATE_IPADDR = `(^127\.)|
@@ -46,7 +53,7 @@ type StaticAnalyzer struct {
 }
 
 func (s StaticAnalyzer) IsUpxPacked() bool {
-	output, err := osutil.RunCmd(5, ".", "/usr/bin/upx", "-q", "-t", s.Target)
+	output, err := osutil.RunCmd(5, EXEC_DIR, BIN_UPX, "-q", "-t", s.Target)
 	if err != nil {
 		return false
 	}
@@ -65,6 +72,26 @@ func (s StaticAnalyzer) GetFileInfo() (string, error) {
 	if isExist, err := fileutil.IsFileExist(abspath); !isExist {
 		return "", err
 	}
-	output, err := osutil.RunCmd(5, ".", "/usr/bin/file", abspath)
+	output, err := osutil.RunCmd(5, EXEC_DIR, BIN_FILE, abspath)
 	return strings.TrimSpace(strings.Split(output, ":")[1]), err
+}
+
+func (s StaticAnalyzer) GetExifInfo() (map[string]string, error) {
+	abspath, err := filepath.Abs(s.Target)
+	if err != nil {
+		return nil, err
+	}
+	output, err := osutil.RunCmd(5, EXEC_DIR, BIN_EXIFTOOL, abspath)
+	result := make(map[string]string)
+	for _, line := range strings.Split(output, "\n") {
+		words := strings.SplitN(line, ":", 2)
+		if len(words) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(words[0])
+		value := strings.TrimSpace(words[1])
+		result[key] = value
+	}
+
+	return result, nil
 }

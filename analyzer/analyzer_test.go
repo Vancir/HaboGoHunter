@@ -35,4 +35,7 @@ func TestStaticAnalyzer(t *testing.T) {
 	deps, _ := sa.GetLibraryDepends()
 	assert.Equal(t, "libc.so.6", deps[1].name)
 	assert.Equal(t, "/usr/lib/libc.so.6", deps[1].path)
+
+	elfHdr, _ := sa.GetElfHeader()
+	assert.Equal(t, "ELF64", elfHdr["Class"])
 }

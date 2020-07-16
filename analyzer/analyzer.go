@@ -21,6 +21,7 @@ const (
 	BIN_LDD      = "/usr/bin/ldd"
 	BIN_FILE     = "/usr/bin/file"
 	BIN_STRINGS  = "/usr/bin/strings"
+	BIN_READELF  = "/usr/bin/readelf"
 	BIN_EXIFTOOL = "/usr/bin/vendor_perl/exiftool"
 )
 
@@ -149,4 +150,27 @@ func (s StaticAnalyzer) GetLibraryDepends() ([]LibraryItem, error) {
 		depends = append(depends, libItem)
 	}
 	return depends, nil
+}
+
+func (s StaticAnalyzer) GetElfHeader() (map[string]string, error) {
+	abspath, err := filepath.Abs(s.Target)
+	if err != nil {
+		return nil, err
+	}
+	output, err := osutil.RunCmd(EXEC_TIMEOUT, EXEC_DIR, BIN_READELF, "-h", abspath)
+	result := make(map[string]string)
+	for idx, line := range strings.Split(output, "\n") {
+		if idx == 0 {
+			continue
+		}
+		words := strings.SplitN(line, ":", 2)
+		if len(words) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(words[0])
+		value := strings.TrimSpace(words[1])
+		result[key] = value
+	}
+
+	return result, nil
 }

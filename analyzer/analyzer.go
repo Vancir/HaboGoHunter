@@ -18,6 +18,7 @@ const (
 	EXEC_DIR     = "."
 	EXEC_TIMEOUT = 5
 	BIN_UPX      = "/usr/bin/upx"
+	BIN_LDD      = "/usr/bin/ldd"
 	BIN_FILE     = "/usr/bin/file"
 	BIN_STRINGS  = "/usr/bin/strings"
 	BIN_EXIFTOOL = "/usr/bin/vendor_perl/exiftool"
@@ -114,4 +115,38 @@ func (s StaticAnalyzer) GetUnicode() ([]string, error) {
 	}
 	output, err := osutil.RunCmd(EXEC_TIMEOUT, EXEC_DIR, BIN_STRINGS, "-a", "-el", abspath)
 	return strings.Split(output, "\n"), err
+}
+
+type LibraryItem struct {
+	name string
+	path string
+}
+
+func (s StaticAnalyzer) GetLibraryDepends() ([]LibraryItem, error) {
+	var depends []LibraryItem
+	abspath, err := filepath.Abs(s.Target)
+	if err != nil {
+		return depends, err
+	}
+	output, err := osutil.RunCmd(EXEC_TIMEOUT, EXEC_DIR, BIN_LDD, abspath)
+
+	for _, line := range strings.Split(output, "\n") {
+		if line == "" {
+			continue
+		}
+
+		libItem := LibraryItem{}
+		if strings.Contains(line, "=>") {
+			words := strings.Split(line, "=>")
+			libItem.name = strings.TrimSpace(words[0])
+			libItem.path = strings.TrimSpace(
+				words[1][:strings.Index(words[1], "(0x")])
+		} else {
+			libItem.name = strings.TrimSpace(
+				line[:strings.Index(line, "(0x")])
+			libItem.path = ""
+		}
+		depends = append(depends, libItem)
+	}
+	return depends, nil
 }
